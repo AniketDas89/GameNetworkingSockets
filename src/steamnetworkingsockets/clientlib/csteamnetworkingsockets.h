@@ -216,7 +216,7 @@ protected:
 
 	CSteamNetworkConnectionBase *InternalConnectP2P( ISteamNetworkingConnectionSignaling *pSignaling, const SteamNetworkingIdentity *pPeerIdentity, int nRemoteVirtualPort, int nOptions, const SteamNetworkingConfigValue_t *pOptions );
 	bool InternalReceivedP2PSignal( const void *pMsg, int cbMsg, ISteamNetworkingSignalingRecvContext *pContext, bool bDefaultPlatformSignaling );
-
+ 
 	// Protected - use Destroy()
 	virtual ~CSteamNetworkingSockets();
 };

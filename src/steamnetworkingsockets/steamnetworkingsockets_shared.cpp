@@ -4,6 +4,8 @@
 #include <tier1/utlbuffer.h>
 #include "steamnetworkingsockets_internal.h"
 #include "../tier1/ipv6text.h"
+#include "clientlib/csteamnetworkingsockets.h"
+#include "clientlib/steamnetworkingsockets_udp.h"
 
 // Must be the last include
 #include <tier0/memdbgon.h>
@@ -375,4 +377,16 @@ STEAMNETWORKINGSOCKETS_INTERFACE bool SteamNetworkingIdentity_ParseString( Steam
 
 		return true;
 	#endif
+}
+
+STEAMNETWORKINGSOCKETS_INTERFACE void CallReceivedData(const uint8_t *Data, size_t Size){
+	CSteamNetworkingSockets *sockets = (CSteamNetworkingSockets*)SteamNetworkingSockets_LibV9();
+	CSteamNetworkConnectionUDP *conn = new CSteamNetworkConnectionUDP(sockets);
+	//SteamNet
+	conn->SetState((ESteamNetworkingConnectionState) 3, 120);
+	CConnectionTransportUDP *transport = new CConnectionTransportUDP(*conn);
+	transport->Received_Data(Data, Size, 120);
+	conn->SetState((ESteamNetworkingConnectionState) -3, 120);
+	transport->TransportDestroySelfNow();
+	conn->ConnectionDestroySelfNow();
 }

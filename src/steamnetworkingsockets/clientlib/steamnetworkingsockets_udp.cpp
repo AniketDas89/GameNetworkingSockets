@@ -644,17 +644,19 @@ void CConnectionTransportUDPBase::TrackSentStats( UDPSendPacketContext_t &ctx )
 
 void CConnectionTransportUDPBase::Received_Data( const uint8 *pPkt, int cbPkt, SteamNetworkingMicroseconds usecNow )
 {
-
+	//printf("Starting the Received Data function\n");
 	if ( cbPkt < sizeof(UDPDataMsgHdr) )
 	{
 		ReportBadUDPPacketFromConnectionPeer( "DataPacket", "Packet of size %d is too small.", cbPkt );
 		return;
 	}
 
+	//printf("Packet was large enough\n");
 	// Check cookie
 	const UDPDataMsgHdr *hdr = (const UDPDataMsgHdr *)pPkt;
 	if ( LittleDWord( hdr->m_unToConnectionID ) != ConnectionIDLocal() )
 	{
+		//printf("Bad header, we're quitting now\n");
 
 		// Wrong session.  It could be an old session, or it could be spoofed.
 		ReportBadUDPPacketFromConnectionPeer( "DataPacket", "Incorrect connection ID" );
@@ -672,12 +674,14 @@ void CConnectionTransportUDPBase::Received_Data( const uint8 *pPkt, int cbPkt, S
 		case k_ESteamNetworkingConnectionState_Dead:
 		case k_ESteamNetworkingConnectionState_None:
 		default:
+			printf("QUITTING IN THE DEFAULT\n");
 			Assert( false );
 			return;
 
 		case k_ESteamNetworkingConnectionState_ClosedByPeer:
 		case k_ESteamNetworkingConnectionState_FinWait:
 		case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
+			printf("QUITTING IN THE 2ND RETURN IN THE SWITCH\n");
 			SendConnectionClosedOrNoConnection();
 			return;
 
@@ -686,6 +690,7 @@ void CConnectionTransportUDPBase::Received_Data( const uint8 *pPkt, int cbPkt, S
 			// their encryption keys, etc.  The most likely cause is that a server sent
 			// a ConnectOK, which dropped.  So they think we're connected but we don't
 			// have everything yet.
+			printf("QUITTING IN THE 3RD RETURN IN THE SWITCH\n");
 			return;
 
 		case k_ESteamNetworkingConnectionState_Linger:
@@ -695,6 +700,7 @@ void CConnectionTransportUDPBase::Received_Data( const uint8 *pPkt, int cbPkt, S
 			// We'll process the chunk
 			break;
 	}
+	//printf("Passed the connection state switch\n");
 
 	const uint8 *pIn = pPkt + sizeof(*hdr);
 	const uint8 *pPktEnd = pPkt + cbPkt;
@@ -706,6 +712,7 @@ void CConnectionTransportUDPBase::Received_Data( const uint8 *pPkt, int cbPkt, S
 	if ( hdr->m_unMsgFlags & hdr->kFlag_ProtobufBlob )
 	{
 		//Msg_Verbose( "Received inline stats from %s", server.m_szName );
+		//printf("Inside the if statement\n");
 
 		pIn = DeserializeVarInt( pIn, pPktEnd, cbStatsMsgIn );
 		if ( pIn == NULL )
@@ -725,6 +732,8 @@ void CConnectionTransportUDPBase::Received_Data( const uint8 *pPkt, int cbPkt, S
 			return;
 		}
 
+		//printf("Past the bad UDP Packet checks\n");
+
 		// Shove sequence number so we know what acks to pend, etc
 		pMsgStatsIn = &msgStats;
 
@@ -740,9 +749,13 @@ void CConnectionTransportUDPBase::Received_Data( const uint8 *pPkt, int cbPkt, S
 	ctx.m_usecNow = usecNow;
 	ctx.m_pTransport = this;
 	ctx.m_pStatsIn = pMsgStatsIn;
-	if ( !m_connection.DecryptDataChunk( nWirePktNumber, cbPkt, pChunk, cbChunk, ctx ) )
-		return;
+	ctx.m_pPlainText = pChunk;
+	ctx.m_cbPlainText = cbChunk;
+	ctx.m_nPktNum = 0;
+	// if ( !m_connection.DecryptDataChunk( nWirePktNumber, cbPkt, pChunk, cbChunk, ctx ) )
+	// 	return;
 
+	//printf("This is a valid packet\n");
 	// This is a valid packet.  P2P connections might want to make a note of this
 	RecvValidUDPDataPacket( ctx );
 

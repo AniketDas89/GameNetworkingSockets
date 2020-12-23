@@ -563,6 +563,8 @@ public:
 	/// to break the abstraction and do things other clients of the
 	/// API could not do easily
 	inline bool IsConnectionForMessagesSession() const { return m_connectionConfig.m_LocalVirtualPort.Get() == k_nVirtualPort_Messages; }
+	void SetState( ESteamNetworkingConnectionState eNewState, SteamNetworkingMicroseconds usecNow );
+
 
 protected:
 	CSteamNetworkConnectionBase( CSteamNetworkingSockets *pSteamNetworkingSocketsInterface );
@@ -713,14 +715,13 @@ protected:
 
 	/// Called from SNP layer when it decodes a packet that serves as a ping measurement
 	virtual void ProcessSNPPing( int msPing, RecvPacketContext_t &ctx );
-
 private:
 
 	void SNP_GatherAckBlocks( SNPAckSerializerHelper &helper, SteamNetworkingMicroseconds usecNow );
 	uint8 *SNP_SerializeAckBlocks( const SNPAckSerializerHelper &helper, uint8 *pOut, const uint8 *pOutEnd, SteamNetworkingMicroseconds usecNow );
 	uint8 *SNP_SerializeStopWaitingFrame( uint8 *pOut, const uint8 *pOutEnd, SteamNetworkingMicroseconds usecNow );
 
-	void SetState( ESteamNetworkingConnectionState eNewState, SteamNetworkingMicroseconds usecNow );
+
 	ESteamNetworkingConnectionState m_eConnectionState;
 
 	/// State of the connection as our peer would observe it.
